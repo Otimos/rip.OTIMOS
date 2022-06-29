@@ -1070,7 +1070,7 @@ do
         end)
     end
 
-    --seventh page: Calc Dmg
+    --seventh page: Calc Dmg OTIMOS?
     do
         local page = GUI:addPage("Calc Dmg")
         local s1 = page:addSection("Select Fighter")
