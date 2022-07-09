@@ -33,8 +33,8 @@ local staterPlayerScriptsFolder = player.PlayerScripts.StarterPlayerScriptsFolde
 local REMOTE = RS.Remote
 local BINDABLE = RS.Bindable
 
-local MAX_SUMMON = 10
-local MAX_EQUIPPED = 8
+local MAX_SUMMON = 20
+local MAX_EQUIPPED = 9
 local MAX_ROOM = 50
 local KILLING_METEOR = false
 local KILLING_GIFT = false
