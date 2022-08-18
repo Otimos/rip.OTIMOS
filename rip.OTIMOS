@@ -252,7 +252,7 @@ A.MouseButton1Click:Connect(
         wait(0.6)
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Otimos/teclado/main/teclado"))()
         wait(0.6)
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/otimos22/chat/main/chat"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Otimos/chat/main/chat"))()
     end)
 B.Name = "exit"
 B.Parent = v
