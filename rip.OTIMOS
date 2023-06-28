@@ -854,6 +854,9 @@ do
                 passivesToKeep[passive] = value
             end)
         end
+	end
+end 
+	warn(load script)
 
     -- fourth page: Trial
     do
@@ -920,7 +923,7 @@ do
             stopTrial = value
         end)
 
-        csec3:addSlider("Select room", 1, 1, MAX_ROOM, function(value)
+        csec3:addSlider("Select room", 50, 50, MAX_ROOM, function(value)
             roomToStopAt = value
         end)
 
