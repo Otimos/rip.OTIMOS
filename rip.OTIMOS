@@ -837,27 +837,8 @@ do
             petsToFuse = getPetsToFuseInto()
             dSec2:updateDropdown(fighterFuseDropDown, "Refreshed fighters", petsToFuse)
         end)
-
-        --get selected fuse since this library is glitchy
-        fighterFuseDropDown.Search.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-            selectedFuse = fighterFuseDropDown.Search.TextBox.Text
-        end)
-
-        local tab = getPassives()
-
-        for _, info in pairs(tab) do
-            local passive = info.__key
-            local s = string.format("%s (%s)", info.DisplayName, passive)
-            passivesToKeep[passive] = false
-
-            dSec3:addToggle(s, false, function(value)
-                passivesToKeep[passive] = value
-            end)
-        end
-	end
-end 
-	warn(load script)
-
+	end 
+	
     -- fourth page: Trial
     do
         local c = GUI:addPage("Trial")
@@ -1020,7 +1001,7 @@ end
             end)
 
             toggles[worldName] = toggle
-        end
+        end)
     end
 
     --sixth page: Defense
@@ -1187,7 +1168,8 @@ end
         end)
 
         damageTextbox = s6:addTextbox("Damage", "0")
-    end
+   	 end)
+	end
 
     --eighth page: Teleport
     do
