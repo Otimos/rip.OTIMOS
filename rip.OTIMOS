@@ -1,5 +1,5 @@
-local ANIME_WARRIORS_SIMULATOR_2_ID = 8425128940 
- if game.PlaceId ~= ANIME_WARRIORS_SIMULATOR_2_ID then return end 
+local ANIME_FIGHTERS_PLACE_ID = 6299805723 
+ if game.PlaceId ~= ANIME_FIGHTERS_PLACE_ID  then return end 
   
  _G.disabled = false 
  _G.themes = _G.themes or { -- themes 
