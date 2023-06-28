@@ -854,7 +854,6 @@ do
                 passivesToKeep[passive] = value
             end)
         end
-    end
 
     -- fourth page: Trial
     do
