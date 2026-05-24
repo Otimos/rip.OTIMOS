@@ -6,6 +6,11 @@ local RunService    = game:GetService("RunService")
 local Lighting      = game:GetService("Lighting")
 local LocalPlayer   = Players.LocalPlayer
 
+-- ══════════════════════════════════════════════════════════════════════════════
+--  LINORIA BOILERPLATE
+-- ══════════════════════════════════════════════════════════════════════════════
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
@@ -224,7 +229,7 @@ TpLoc:AddButton({
 })
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  SAVED POSITION (binds via UIS, F2 = salvar, R = retornar)
+--  SAVED POSITION (binds via UIS, F2 = salvar, F3 = retornar)
 -- ══════════════════════════════════════════════════════════════════════════════
 local savedPosition = nil
 
@@ -242,11 +247,11 @@ local function doReturnPosition()
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
 	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
 	hrp.CFrame = savedPosition
-	Library:Notify("✔ Teleportado para a posição salva! [R]", 2)
+	Library:Notify("✔ Teleportado para a posição salva! [F3]", 2)
 end
 
 TpLoc:AddButton({ Text = 'Save Position [F2]',    Func = doSavePosition })
-TpLoc:AddButton({ Text = 'Return to Saved [R]',  Func = doReturnPosition })
+TpLoc:AddButton({ Text = 'Return to Saved [F3]',  Func = doReturnPosition })
 
 for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Store", "Prestige Store" }) do
 	TpStore:AddButton({ Text = storeName, Func = function() teleportTo(workspace:FindFirstChild(storeName)) end })
@@ -306,8 +311,8 @@ track(UIS.InputBegan:Connect(function(input, gameProcessed)
 		end
 	end
 	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
-	if input.KeyCode == Enum.KeyCode.R then doReturnPosition() end
-	if input.KeyCode == Enum.KeyCode.F then
+	if input.KeyCode == Enum.KeyCode.F3 then doReturnPosition() end
+	if input.KeyCode == Enum.KeyCode.F4 then
 		local plots = workspace:FindFirstChild("Plots")
 		if not plots then return Library:Notify("Plots folder not found.", 3) end
 		local myPlot
