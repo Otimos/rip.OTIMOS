@@ -1,270 +1,603 @@
-local Players       = game:GetService("Players")
-local workspace     = game:GetService("Workspace")
-local VIM           = game:GetService("VirtualInputManager")
-local UIS           = game:GetService("UserInputService")
-local RunService    = game:GetService("RunService")
-local Lighting      = game:GetService("Lighting")
-local LocalPlayer   = Players.LocalPlayer
-
--- ------------------------------------------------------------------------------
---  LINORIA BOILERPLATE
--- ------------------------------------------------------------------------------
-local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
-
-local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-
-local Window = Library:CreateWindow({
-	Title = 'Hamood vibecoding',
-	Center = true,
-	AutoShow = true,
-	TabPadding = 8,
-	MenuFadeTime = 0.2
-})
-
-local Tabs = {
-	Ores = Window:AddTab('Ores'),
-	Teleports = Window:AddTab('Teleports'),
-	Misc = Window:AddTab('Misc'),
-	Visuals = Window:AddTab('Visuals'),
-	['UI Settings'] = Window:AddTab('UI Settings'),
-}
-
-Library:SetWatermark('Hamood vibecoding | Linoria')
-
+local Players    = game:GetService("Players")
+local workspace  = game:GetService("Workspace")
+local VIM        = game:GetService("VirtualInputManager")
+local UIS        = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Lighting   = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer  = Players.LocalPlayer
 
 -- ------------------------------------------------------------------------------
 --  CONNECTION REGISTRY
 -- ------------------------------------------------------------------------------
 local connections = {}
 local function track(conn) connections[#connections + 1] = conn end
-
 local function disconnectAll()
 	for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
 	table.clear(connections)
 end
 
+-- ------------------------------------------------------------------------------
+--  GUI BASE
+-- ------------------------------------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Name = "OTIMOS"
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 999
+gui.IgnoreGuiInset = true
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = game:GetService("CoreGui")
+
+local COLORS = {
+	bg         = Color3.fromRGB(15, 15, 20),
+	sidebar    = Color3.fromRGB(20, 20, 28),
+	panel      = Color3.fromRGB(25, 25, 35),
+	card       = Color3.fromRGB(32, 32, 45),
+	accent     = Color3.fromRGB(100, 120, 255),
+	accentDim  = Color3.fromRGB(60, 75, 180),
+	text       = Color3.fromRGB(220, 220, 240),
+	textDim    = Color3.fromRGB(130, 130, 160),
+	border     = Color3.fromRGB(45, 45, 65),
+	success    = Color3.fromRGB(80, 200, 130),
+	danger     = Color3.fromRGB(220, 80, 80),
+	warning    = Color3.fromRGB(220, 170, 60),
+}
+
+local function corner(parent, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius or 8)
+	c.Parent = parent
+	return c
+end
+
+local function stroke(parent, color, thickness)
+	local s = Instance.new("UIStroke")
+	s.Color = color or COLORS.border
+	s.Thickness = thickness or 1
+	s.Parent = parent
+	return s
+end
+
+local function label(parent, text, size, color, font, xalign)
+	local l = Instance.new("TextLabel")
+	l.BackgroundTransparency = 1
+	l.Text = text
+	l.TextSize = size or 13
+	l.TextColor3 = color or COLORS.text
+	l.Font = font or Enum.Font.Gotham
+	l.TextXAlignment = xalign or Enum.TextXAlignment.Left
+	l.Parent = parent
+	return l
+end
+
+local function notify(msg, color)
+	local notifFrame = Instance.new("Frame")
+	notifFrame.Size = UDim2.new(0, 260, 0, 36)
+	notifFrame.Position = UDim2.new(0.5, -130, 1, -60)
+	notifFrame.BackgroundColor3 = COLORS.card
+	notifFrame.BorderSizePixel = 0
+	notifFrame.Parent = gui
+	corner(notifFrame, 8)
+	stroke(notifFrame, color or COLORS.accent)
+
+	local l = label(notifFrame, "  " .. msg, 12, color or COLORS.accent)
+	l.Size = UDim2.new(1, 0, 1, 0)
+	l.TextXAlignment = Enum.TextXAlignment.Left
+
+	TweenService:Create(notifFrame, TweenInfo.new(0.3), { Position = UDim2.new(0.5, -130, 1, -70) }):Play()
+	task.delay(3, function()
+		TweenService:Create(notifFrame, TweenInfo.new(0.3), { Position = UDim2.new(0.5, -130, 1, 10) }):Play()
+		task.delay(0.3, function() notifFrame:Destroy() end)
+	end)
+end
+
+-- ------------------------------------------------------------------------------
+--  JANELA PRINCIPAL
+-- ------------------------------------------------------------------------------
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 560, 0, 400)
+main.Position = UDim2.new(0.5, -280, 0.5, -200)
+main.BackgroundColor3 = COLORS.bg
+main.BorderSizePixel = 0
+main.Parent = gui
+corner(main, 10)
+stroke(main, COLORS.border)
+
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 40)
+header.BackgroundColor3 = COLORS.sidebar
+header.BorderSizePixel = 0
+header.Parent = main
+corner(header, 10)
+-- fix bottom corners
+local headerFix = Instance.new("Frame")
+headerFix.Size = UDim2.new(1, 0, 0, 10)
+headerFix.Position = UDim2.new(0, 0, 1, -10)
+headerFix.BackgroundColor3 = COLORS.sidebar
+headerFix.BorderSizePixel = 0
+headerFix.Parent = header
+
+local titleIcon = label(header, "H", 16, COLORS.accent, Enum.Font.GothamBold, Enum.TextXAlignment.Center)
+titleIcon.Size = UDim2.new(0, 36, 1, 0)
+titleIcon.Position = UDim2.new(0, 4, 0, 0)
+
+local titleTxt = label(header, "OTIMOS", 14, COLORS.text, Enum.Font.GothamBold)
+titleTxt.Size = UDim2.new(0, 120, 1, 0)
+titleTxt.Position = UDim2.new(0, 38, 0, 0)
+
+local subTxt = label(header, "v2.0", 11, COLORS.textDim, Enum.Font.Gotham)
+subTxt.Size = UDim2.new(0, 60, 1, 0)
+subTxt.Position = UDim2.new(0, 108, 0, 0)
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 28, 0, 28)
+closeBtn.Position = UDim2.new(1, -34, 0.5, -14)
+closeBtn.BackgroundColor3 = COLORS.danger
+closeBtn.Text = "x"
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+closeBtn.TextSize = 13
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.BorderSizePixel = 0
+closeBtn.Parent = header
+corner(closeBtn, 6)
+
+-- Drag
+local dragging, dragStart, winStart
+header.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true dragStart = i.Position winStart = main.Position
+		i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then dragging = false end end)
+	end
+end)
+UIS.InputChanged:Connect(function(i)
+	if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local d = i.Position - dragStart
+		main.Position = UDim2.new(winStart.X.Scale, winStart.X.Offset + d.X, winStart.Y.Scale, winStart.Y.Offset + d.Y)
+	end
+end)
+closeBtn.MouseButton1Click:Connect(function() main.Visible = false end)
+
+-- ------------------------------------------------------------------------------
+--  SIDEBAR
+-- ------------------------------------------------------------------------------
+local sidebar = Instance.new("Frame")
+sidebar.Size = UDim2.new(0, 130, 1, -40)
+sidebar.Position = UDim2.new(0, 0, 0, 40)
+sidebar.BackgroundColor3 = COLORS.sidebar
+sidebar.BorderSizePixel = 0
+sidebar.Parent = main
+
+local sideList = Instance.new("UIListLayout")
+sideList.Padding = UDim.new(0, 4)
+sideList.Parent = sidebar
+
+local sidePad = Instance.new("UIPadding")
+sidePad.PaddingTop = UDim.new(0, 8)
+sidePad.PaddingLeft = UDim.new(0, 8)
+sidePad.PaddingRight = UDim.new(0, 8)
+sidePad.Parent = sidebar
+
+-- Panel area
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(1, -130, 1, -40)
+panel.Position = UDim2.new(0, 130, 0, 40)
+panel.BackgroundColor3 = COLORS.panel
+panel.BorderSizePixel = 0
+panel.Parent = main
+
+-- Divider
+local div = Instance.new("Frame")
+div.Size = UDim2.new(0, 1, 1, -40)
+div.Position = UDim2.new(0, 130, 0, 40)
+div.BackgroundColor3 = COLORS.border
+div.BorderSizePixel = 0
+div.Parent = main
+
+-- ------------------------------------------------------------------------------
+--  TAB SYSTEM
+-- ------------------------------------------------------------------------------
+local tabs = {}
+local activeTab = nil
+
+local function makeTab(name, icon)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 0, 36)
+	btn.BackgroundColor3 = COLORS.sidebar
+	btn.Text = ""
+	btn.BorderSizePixel = 0
+	btn.AutoButtonColor = false
+	btn.Parent = sidebar
+	corner(btn, 6)
+
+	local iconL = label(btn, icon, 14, COLORS.textDim, Enum.Font.GothamBold, Enum.TextXAlignment.Center)
+	iconL.Size = UDim2.new(0, 28, 1, 0)
+	iconL.Position = UDim2.new(0, 4, 0, 0)
+
+	local nameL = label(btn, name, 12, COLORS.textDim, Enum.Font.GothamSemibold)
+	nameL.Size = UDim2.new(1, -36, 1, 0)
+	nameL.Position = UDim2.new(0, 34, 0, 0)
+
+	local content = Instance.new("ScrollingFrame")
+	content.Size = UDim2.new(1, 0, 1, 0)
+	content.BackgroundTransparency = 1
+	content.BorderSizePixel = 0
+	content.ScrollBarThickness = 3
+	content.ScrollBarImageColor3 = COLORS.accent
+	content.CanvasSize = UDim2.new(0, 0, 0, 0)
+	content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	content.Visible = false
+	content.Parent = panel
+
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.Padding = UDim.new(0, 8)
+	listLayout.Parent = content
+	local pad = Instance.new("UIPadding")
+	pad.PaddingTop = UDim.new(0, 12)
+	pad.PaddingLeft = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.Parent = content
+
+	local tabData = { btn = btn, content = content, iconL = iconL, nameL = nameL }
+	tabs[name] = tabData
+
+	btn.MouseButton1Click:Connect(function()
+		if activeTab then
+			activeTab.content.Visible = false
+			activeTab.btn.BackgroundColor3 = COLORS.sidebar
+			activeTab.iconL.TextColor3 = COLORS.textDim
+			activeTab.nameL.TextColor3 = COLORS.textDim
+		end
+		activeTab = tabData
+		content.Visible = true
+		btn.BackgroundColor3 = COLORS.card
+		iconL.TextColor3 = COLORS.accent
+		nameL.TextColor3 = COLORS.text
+	end)
+
+	return content
+end
+
+-- ------------------------------------------------------------------------------
+--  UI COMPONENTS
+-- ------------------------------------------------------------------------------
+local function makeSection(parent, title)
+	local sec = Instance.new("Frame")
+	sec.Size = UDim2.new(1, 0, 0, 0)
+	sec.AutomaticSize = Enum.AutomaticSize.Y
+	sec.BackgroundColor3 = COLORS.card
+	sec.BorderSizePixel = 0
+	sec.Parent = parent
+	corner(sec, 8)
+	stroke(sec, COLORS.border)
+
+	local secList = Instance.new("UIListLayout")
+	secList.Padding = UDim.new(0, 0)
+	secList.Parent = sec
+
+	local secTitle = Instance.new("Frame")
+	secTitle.Size = UDim2.new(1, 0, 0, 32)
+	secTitle.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
+	secTitle.BorderSizePixel = 0
+	secTitle.Parent = sec
+	corner(secTitle, 8)
+	local titleFix = Instance.new("Frame")
+	titleFix.Size = UDim2.new(1, 0, 0, 8)
+	titleFix.Position = UDim2.new(0, 0, 1, -8)
+	titleFix.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
+	titleFix.BorderSizePixel = 0
+	titleFix.Parent = secTitle
+
+	local accent = Instance.new("Frame")
+	accent.Size = UDim2.new(0, 3, 0, 16)
+	accent.Position = UDim2.new(0, 10, 0.5, -8)
+	accent.BackgroundColor3 = COLORS.accent
+	accent.BorderSizePixel = 0
+	accent.Parent = secTitle
+	corner(accent, 2)
+
+	local tl = label(secTitle, title, 12, COLORS.text, Enum.Font.GothamSemibold)
+	tl.Size = UDim2.new(1, -24, 1, 0)
+	tl.Position = UDim2.new(0, 20, 0, 0)
+
+	local inner = Instance.new("Frame")
+	inner.Size = UDim2.new(1, 0, 0, 0)
+	inner.AutomaticSize = Enum.AutomaticSize.Y
+	inner.BackgroundTransparency = 1
+	inner.BorderSizePixel = 0
+	inner.Parent = sec
+	local innerList = Instance.new("UIListLayout")
+	innerList.Padding = UDim.new(0, 0)
+	innerList.Parent = inner
+	local innerPad = Instance.new("UIPadding")
+	innerPad.PaddingTop = UDim.new(0, 6)
+	innerPad.PaddingBottom = UDim.new(0, 8)
+	innerPad.PaddingLeft = UDim.new(0, 10)
+	innerPad.PaddingRight = UDim.new(0, 10)
+	innerPad.Parent = inner
+
+	return inner
+end
+
+local function makeToggle(parent, text, default, callback)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 34)
+	row.BackgroundTransparency = 1
+	row.BorderSizePixel = 0
+	row.Parent = parent
+
+	local lbl = label(row, text, 12, COLORS.text, Enum.Font.Gotham)
+	lbl.Size = UDim2.new(1, -50, 1, 0)
+	lbl.Position = UDim2.new(0, 0, 0, 0)
+
+	local track2 = Instance.new("Frame")
+	track2.Size = UDim2.new(0, 38, 0, 20)
+	track2.Position = UDim2.new(1, -42, 0.5, -10)
+	track2.BackgroundColor3 = default and COLORS.accent or COLORS.border
+	track2.BorderSizePixel = 0
+	track2.Parent = row
+	corner(track2, 10)
+
+	local thumb = Instance.new("Frame")
+	thumb.Size = UDim2.new(0, 16, 0, 16)
+	thumb.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+	thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	thumb.BorderSizePixel = 0
+	thumb.Parent = track2
+	corner(thumb, 8)
+
+	local value = default or false
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 1, 0)
+	btn.BackgroundTransparency = 1
+	btn.Text = ""
+	btn.Parent = row
+
+	btn.MouseButton1Click:Connect(function()
+		value = not value
+		local tweenInfo = TweenInfo.new(0.15)
+		TweenService:Create(track2, tweenInfo, { BackgroundColor3 = value and COLORS.accent or COLORS.border }):Play()
+		TweenService:Create(thumb, tweenInfo, { Position = value and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8) }):Play()
+		if callback then callback(value) end
+	end)
+
+	return { getValue = function() return value end }
+end
+
+local function makeButton(parent, text, callback)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 0, 32)
+	btn.BackgroundColor3 = COLORS.accentDim
+	btn.Text = text
+	btn.TextColor3 = COLORS.text
+	btn.TextSize = 12
+	btn.Font = Enum.Font.GothamSemibold
+	btn.BorderSizePixel = 0
+	btn.AutoButtonColor = false
+	btn.Parent = parent
+	corner(btn, 6)
+
+	btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundColor3 = COLORS.accent }):Play() end)
+	btn.MouseLeave:Connect(function() TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundColor3 = COLORS.accentDim }):Play() end)
+	btn.MouseButton1Click:Connect(function() if callback then callback() end end)
+	return btn
+end
+
+local function makeSlider(parent, text, min, max, default, callback)
+	local wrap = Instance.new("Frame")
+	wrap.Size = UDim2.new(1, 0, 0, 48)
+	wrap.BackgroundTransparency = 1
+	wrap.BorderSizePixel = 0
+	wrap.Parent = parent
+
+	local lbl = label(wrap, text, 12, COLORS.text, Enum.Font.Gotham)
+	lbl.Size = UDim2.new(0.6, 0, 0, 18)
+	lbl.Position = UDim2.new(0, 0, 0, 0)
+
+	local valLbl = label(wrap, tostring(default), 12, COLORS.accent, Enum.Font.GothamBold, Enum.TextXAlignment.Right)
+	valLbl.Size = UDim2.new(0.4, 0, 0, 18)
+	valLbl.Position = UDim2.new(0.6, 0, 0, 0)
+
+	local track2 = Instance.new("Frame")
+	track2.Size = UDim2.new(1, 0, 0, 6)
+	track2.Position = UDim2.new(0, 0, 0, 26)
+	track2.BackgroundColor3 = COLORS.border
+	track2.BorderSizePixel = 0
+	track2.Parent = wrap
+	corner(track2, 3)
+
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+	fill.BackgroundColor3 = COLORS.accent
+	fill.BorderSizePixel = 0
+	fill.Parent = track2
+	corner(fill, 3)
+
+	local value = default
+	local sliding = false
+
+	track2.InputBegan:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = true end
+	end)
+	track2.InputEnded:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 then sliding = false end
+	end)
+	UIS.InputChanged:Connect(function(i)
+		if sliding and i.UserInputType == Enum.UserInputType.MouseMovement then
+			local rel = math.clamp((i.Position.X - track2.AbsolutePosition.X) / track2.AbsoluteSize.X, 0, 1)
+			value = math.floor(min + (max - min) * rel)
+			fill.Size = UDim2.new(rel, 0, 1, 0)
+			valLbl.Text = tostring(value)
+			if callback then callback(value) end
+		end
+	end)
+
+	return { getValue = function() return value end }
+end
+
+-- ------------------------------------------------------------------------------
+--  TABS
+-- ------------------------------------------------------------------------------
+local oresTab      = makeTab("Ores",      "O")
+local teleportTab  = makeTab("Teleport",  "T")
+local miscTab      = makeTab("Misc",      "M")
+local visualsTab   = makeTab("Visuals",   "V")
+local settingsTab  = makeTab("Settings",  "S")
+
+-- Ativar primeira aba
+tabs["Ores"].btn.BackgroundColor3 = COLORS.card
+tabs["Ores"].iconL.TextColor3 = COLORS.accent
+tabs["Ores"].nameL.TextColor3 = COLORS.text
+tabs["Ores"].content.Visible = true
+activeTab = tabs["Ores"]
 
 -- ------------------------------------------------------------------------------
 --  ORE ESP
 -- ------------------------------------------------------------------------------
-local oreAdornments = {}
-local oreESPEnabled = false
-local showTracers = false
+local oreAdornments  = {}
+local oreESPEnabled  = false
+local showTracers    = false
 local maxEspDistance = 1000
-
-local OreESPGroup = Tabs.Ores:AddLeftGroupbox('ESP Settings')
 
 local function addOreESP(part)
 	if not part:IsA("BasePart") then return end
 	if oreAdornments[part] then return end
-
 	local color = part.Color
-
 	local box = Instance.new("BoxHandleAdornment")
-	box.Adornee             = part
-	box.Size                = part.Size
-	box.Color3              = color
-	box.Transparency        = 0.5
-	box.ZIndex              = 5
-	box.AlwaysOnTop         = true
-	box.Parent              = workspace.CurrentCamera
-	box.Visible             = oreESPEnabled
-
+	box.Adornee = part box.Size = part.Size box.Color3 = color
+	box.Transparency = 0.5 box.ZIndex = 5 box.AlwaysOnTop = true
+	box.Parent = workspace.CurrentCamera box.Visible = oreESPEnabled
 	local tracer = Drawing.new("Line")
-	tracer.Visible      = false
-	tracer.Color        = color
-	tracer.Thickness    = 1
-	tracer.Transparency = 1
-
+	tracer.Visible = false tracer.Color = color tracer.Thickness = 1 tracer.Transparency = 1
 	oreAdornments[part] = { box = box, tracer = tracer, inRange = true }
 end
 
 local function removeOreESP(part)
-	local data = oreAdornments[part]
-	if data then
-		if data.box then data.box:Destroy() end
-		if data.tracer then data.tracer:Remove() end
-		oreAdornments[part] = nil
-	end
+	local d = oreAdornments[part]
+	if d then if d.box then d.box:Destroy() end if d.tracer then d.tracer:Remove() end oreAdornments[part] = nil end
 end
 
 local function clearAllOreESP()
 	for part in pairs(oreAdornments) do removeOreESP(part) end
 end
 
-OreESPGroup:AddToggle('OreESP', {
-	Text = 'Show Ore ESP',
-	Default = false,
-	Tooltip = 'Highlights all ores in workspace',
-	Callback = function(Value)
-		oreESPEnabled = Value
-		if Value then
-			local placedOre = workspace:FindFirstChild("PlacedOre")
-			if not placedOre then return Library:Notify("PlacedOre folder not found.", 4) end
-			for _, desc in placedOre:GetDescendants() do
-				if desc:IsA("BasePart") and not oreAdornments[desc] then
-					addOreESP(desc)
-				end
-			end
-		else
-			for part, data in pairs(oreAdornments) do
-				if data.box then data.box.Visible = false end
-				if data.tracer then data.tracer.Visible = false end
-			end
+local espSec = makeSection(oresTab, "ESP Settings")
+makeToggle(espSec, "Show Ore ESP", false, function(v)
+	oreESPEnabled = v
+	if v then
+		local placedOre = workspace:FindFirstChild("PlacedOre")
+		if not placedOre then return notify("PlacedOre not found", COLORS.danger) end
+		for _, desc in placedOre:GetDescendants() do
+			if desc:IsA("BasePart") then addOreESP(desc) end
+		end
+	else
+		for _, data in pairs(oreAdornments) do
+			if data.box then data.box.Visible = false end
+			if data.tracer then data.tracer.Visible = false end
 		end
 	end
-})
-
-OreESPGroup:AddToggle('OreTracers', {
-	Text = 'Show Tracers',
-	Default = false,
-	Callback = function(Value) showTracers = Value end
-})
-
-OreESPGroup:AddSlider('MaxEspDistance', {
-	Text = 'ESP Max Distance',
-	Default = 1000,
-	Min = 50,
-	Max = 5000,
-	Rounding = 0,
-	Compact = false,
-	Callback = function(Value) maxEspDistance = Value end
-})
+end)
+makeToggle(espSec, "Show Tracers", false, function(v) showTracers = v end)
+makeSlider(espSec, "Max Distance", 50, 5000, 1000, function(v) maxEspDistance = v end)
 
 local function setupOreConnections(placedOre)
-	track(placedOre.DescendantAdded:Connect(function(desc)
-		if desc:IsA("BasePart") then addOreESP(desc) end
-	end))
-	track(placedOre.DescendantRemoving:Connect(function(desc)
-		removeOreESP(desc)
-	end))
-
-	local lastDistanceCheck = 0
-
+	track(placedOre.DescendantAdded:Connect(function(d) if d:IsA("BasePart") then addOreESP(d) end end))
+	track(placedOre.DescendantRemoving:Connect(function(d) removeOreESP(d) end))
+	local lastCheck = 0
 	track(RunService.RenderStepped:Connect(function()
 		if not oreESPEnabled then return end
-
 		local char = LocalPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		local camera = workspace.CurrentCamera
-
 		local now = os.clock()
-		local shouldUpdateDistance = false
-		if now - lastDistanceCheck > 0.5 then
-			shouldUpdateDistance = true
-			lastDistanceCheck = now
-		end
-
+		local checkDist = now - lastCheck > 0.5
+		if checkDist then lastCheck = now end
 		for part, data in pairs(oreAdornments) do
 			if part and part.Parent and hrp then
-				if shouldUpdateDistance then
-					local dist = (hrp.Position - part.Position).Magnitude
-					data.inRange = dist <= maxEspDistance
+				if checkDist then
+					data.inRange = (hrp.Position - part.Position).Magnitude <= maxEspDistance
 					data.box.Visible = data.inRange
 				end
-
 				if showTracers and data.inRange then
-					local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+					local sp, onScreen = camera:WorldToViewportPoint(part.Position)
 					if onScreen then
 						data.tracer.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
-						data.tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+						data.tracer.To = Vector2.new(sp.X, sp.Y)
 						data.tracer.Visible = true
-					else
-						data.tracer.Visible = false
-					end
-				else
-					if data.tracer.Visible then data.tracer.Visible = false end
-				end
-			else
-				data.box.Visible = false
-				if data.tracer.Visible then data.tracer.Visible = false end
-			end
+					else data.tracer.Visible = false end
+				else data.tracer.Visible = false end
+			else data.box.Visible = false data.tracer.Visible = false end
 		end
 	end))
 end
 
-local existingPlacedOre = workspace:FindFirstChild("PlacedOre")
-if existingPlacedOre then
-	setupOreConnections(existingPlacedOre)
-else
-	task.spawn(function()
-		local placedOre = workspace:WaitForChild("PlacedOre", 60)
-		if placedOre then setupOreConnections(placedOre) end
-	end)
-end
-
+local existingOre = workspace:FindFirstChild("PlacedOre")
+if existingOre then setupOreConnections(existingOre)
+else task.spawn(function()
+	local ore = workspace:WaitForChild("PlacedOre", 60)
+	if ore then setupOreConnections(ore) end
+end) end
 
 -- ------------------------------------------------------------------------------
---  TELEPORT
+--  TELEPORTS
 -- ------------------------------------------------------------------------------
-local TpLoc = Tabs.Teleports:AddLeftGroupbox('Locations')
-local TpStore = Tabs.Teleports:AddRightGroupbox('Stores')
+local savedPosition = nil
 
 local function teleportTo(model)
 	local char = LocalPlayer.Character
 	if not char then return end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
-	if not model then return Library:Notify("Location not found in workspace.", 3) end
+	if not model then return notify("Location not found", COLORS.danger) end
 	local target = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-	if not target then return Library:Notify("No valid part found.", 3) end
+	if not target then return notify("No valid part found", COLORS.danger) end
 	hrp.CFrame = target.CFrame + Vector3.new(0, 5, 0)
 end
-
-TpLoc:AddButton({ Text = 'Mine', Func = function() teleportTo(workspace:FindFirstChild("CollapseStuff")) end })
-TpLoc:AddButton({
-	Text = 'My Plot',
-	Func = function()
-		local plots = workspace:FindFirstChild("Plots")
-		if not plots then return Library:Notify("Plots folder not found.", 3) end
-		local myPlot
-		for _, plot in plots:GetChildren() do
-			local id = plot:GetAttribute("PlayerId") or plot:GetAttribute("OwnerId") or plot:GetAttribute("Owner") or plot:GetAttribute("UserId")
-			if id == LocalPlayer.UserId then myPlot = plot break end
-		end
-		if myPlot then teleportTo(myPlot) else Library:Notify("Your plot was not found.", 4) end
-	end
-})
-
--- ------------------------------------------------------------------------------
---  SAVED POSITION (binds via UIS, F2 = salvar, F3 = retornar)
--- ------------------------------------------------------------------------------
-local savedPosition = nil
 
 local function doSavePosition()
 	local char = LocalPlayer.Character
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
+	if not hrp then return notify("Character not found", COLORS.danger) end
 	savedPosition = hrp.CFrame
-	Library:Notify("✔ Posição salva! [F2]", 2)
+	notify("Position saved! [F2]", COLORS.success)
 end
 
 local function doReturnPosition()
-	if not savedPosition then return Library:Notify("Nenhuma posição salva ainda.", 3) end
+	if not savedPosition then return notify("No saved position yet", COLORS.warning) end
 	local char = LocalPlayer.Character
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
+	if not hrp then return end
 	hrp.CFrame = savedPosition
-	Library:Notify("✔ Teleportado para a posição salva! [F3]", 2)
+	notify("Returned to saved position! [F3]", COLORS.success)
 end
 
-TpLoc:AddButton({ Text = 'Save Position [F2]',    Func = doSavePosition })
-TpLoc:AddButton({ Text = 'Return to Saved [F3]',  Func = doReturnPosition })
+local locSec   = makeSection(teleportTab, "Locations")
+local storeSec = makeSection(teleportTab, "Stores")
+local posSec   = makeSection(teleportTab, "Saved Position")
+
+makeButton(locSec, "Mine", function() teleportTo(workspace:FindFirstChild("CollapseStuff")) end)
+makeButton(locSec, "My Plot [F4]", function()
+	local plots = workspace:FindFirstChild("Plots")
+	if not plots then return notify("Plots folder not found", COLORS.danger) end
+	local myPlot
+	for _, plot in plots:GetChildren() do
+		local id = plot:GetAttribute("PlayerId") or plot:GetAttribute("OwnerId") or plot:GetAttribute("Owner") or plot:GetAttribute("UserId")
+		if id == LocalPlayer.UserId then myPlot = plot break end
+	end
+	if myPlot then teleportTo(myPlot) else notify("Your plot was not found", COLORS.danger) end
+end)
 
 for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Store", "Prestige Store" }) do
-	TpStore:AddButton({ Text = storeName, Func = function() teleportTo(workspace:FindFirstChild(storeName)) end })
+	makeButton(storeSec, storeName, function() teleportTo(workspace:FindFirstChild(storeName)) end)
 end
 
+makeButton(posSec, "Save Position [F2]", doSavePosition)
+makeButton(posSec, "Return to Saved [F3]", doReturnPosition)
 
 -- ------------------------------------------------------------------------------
---  MISC & CHARACTER
+--  MISC
 -- ------------------------------------------------------------------------------
-local MiscMove  = Tabs.Misc:AddLeftGroupbox('Movement')
-local MiscUtils = Tabs.Misc:AddLeftGroupbox('Utilities')
-local MiscSell  = Tabs.Misc:AddRightGroupbox('Auto Sell')
-
 local DEFAULT_SPEED = 16
 local BOOST_SPEED   = 50
 local walkBoostOn   = false
@@ -283,83 +616,34 @@ track(LocalPlayer.CharacterAdded:Connect(function(char)
 	if hum and walkBoostOn then hum.WalkSpeed = BOOST_SPEED end
 end))
 
-MiscMove:AddSlider('BoostSpeed', { Text = 'Boost WalkSpeed', Default = 50, Min = 16, Max = 250, Rounding = 0, Callback = function(v) BOOST_SPEED = v if walkBoostOn then applyWalkSpeed(BOOST_SPEED) end end })
-MiscMove:AddToggle('WalkBoost', {
-	Text = 'WalkSpeed Boost',
-	Default = false,
-	Callback = function(Value)
-		walkBoostOn = Value
-		applyWalkSpeed(Value and BOOST_SPEED or DEFAULT_SPEED)
-	end
-}):AddKeyPicker('WalkBoostKey', {
-	Default = 'F1',
-	SyncToggleState = true,
-	Mode = 'Toggle',
-	Text = 'WalkSpeed Boost'
-})
+local moveSec  = makeSection(miscTab, "Movement")
+local utilSec  = makeSection(miscTab, "Utilities")
+local sellSec  = makeSection(miscTab, "Auto Sell")
 
-MiscMove:AddToggle('InfJump', { Text = 'Infinite Jump', Default = false, Callback = function(v) infJumpOn = v end })
-MiscMove:AddToggle('Noclip',  { Text = 'Noclip',        Default = false, Callback = function(v) noclipOn  = v end })
+makeSlider(moveSec, "Boost WalkSpeed", 16, 250, 50, function(v) BOOST_SPEED = v if walkBoostOn then applyWalkSpeed(BOOST_SPEED) end end)
+makeToggle(moveSec, "WalkSpeed Boost [F1]", false, function(v)
+	walkBoostOn = v
+	applyWalkSpeed(v and BOOST_SPEED or DEFAULT_SPEED)
+end)
+makeToggle(moveSec, "Infinite Jump", false, function(v) infJumpOn = v end)
+makeToggle(moveSec, "Noclip", false, function(v) noclipOn = v end)
 
-track(UIS.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.Space and infJumpOn then
-		local char = LocalPlayer.Character
-		if char then
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-		end
-	end
-	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
-	if input.KeyCode == Enum.KeyCode.F3 then doReturnPosition() end
-	if input.KeyCode == Enum.KeyCode.F4 then
-		local plots = workspace:FindFirstChild("Plots")
-		if not plots then return Library:Notify("Plots folder not found.", 3) end
-		local myPlot
-		for _, plot in plots:GetChildren() do
-			local id = plot:GetAttribute("PlayerId") or plot:GetAttribute("OwnerId") or plot:GetAttribute("Owner") or plot:GetAttribute("UserId")
-			if id == LocalPlayer.UserId then myPlot = plot break end
-		end
-		if myPlot then teleportTo(myPlot) else Library:Notify("Your plot was not found.", 4) end
-	end
-end))
+makeButton(utilSec, "Refresh Cooldowns", function()
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hrp, hum = char:FindFirstChild("HumanoidRootPart"), char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not hum then return end
+	local savedCFrame = hrp.CFrame
+	local conn
+	conn = LocalPlayer.CharacterAdded:Connect(function(newChar)
+		conn:Disconnect()
+		local newHRP = newChar:WaitForChild("HumanoidRootPart", 10)
+		if newHRP then task.wait(0.2) newHRP.CFrame = savedCFrame end
+	end)
+	hum.Health = 0
+end)
 
-track(RunService.Stepped:Connect(function()
-	if noclipOn then
-		local char = LocalPlayer.Character
-		if char then
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") and part.CanCollide then
-					part.CanCollide = false
-				end
-			end
-		end
-	end
-end))
-
-MiscUtils:AddButton({
-	Text = 'Refresh Cooldowns',
-	Tooltip = 'Kills your character and teleports you back',
-	Func = function()
-		local char = LocalPlayer.Character
-		if not char then return end
-		local hrp, hum = char:FindFirstChild("HumanoidRootPart"), char:FindFirstChildOfClass("Humanoid")
-		if not hrp or not hum then return end
-		local savedCFrame = hrp.CFrame
-		local conn
-		conn = LocalPlayer.CharacterAdded:Connect(function(newChar)
-			conn:Disconnect()
-			local newHRP = newChar:WaitForChild("HumanoidRootPart", 10)
-			if newHRP then task.wait(0.2) newHRP.CFrame = savedCFrame end
-		end)
-		hum.Health = 0
-	end
-})
-
-
--- ------------------------------------------------------------------------------
---  AUTO SELL
--- ------------------------------------------------------------------------------
+-- Auto Sell
 local autoSellEnabled = false
 local autoSellThread  = nil
 local SELL_INTERVAL   = 60
@@ -370,9 +654,7 @@ local function getUnloader()
 	local factory = workspace:FindFirstChild("FactoryGridItemsClient")
 	if factory then
 		for _, desc in factory:GetDescendants() do
-			if desc:IsA("Model") and string.find(string.lower(desc.Name), "unloader") then
-				return desc
-			end
+			if desc:IsA("Model") and string.find(string.lower(desc.Name), "unloader") then return desc end
 		end
 	end
 	return nil
@@ -380,148 +662,187 @@ end
 
 local function doSell()
 	local char = LocalPlayer.Character
-	if not char then return Library:Notify("Sell Failed: Character not loaded", 3) end
+	if not char then return notify("Sell Failed: No character", COLORS.danger) end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return Library:Notify("Sell Failed: HumanoidRootPart missing", 3) end
-
+	if not hrp then return notify("Sell Failed: No HRP", COLORS.danger) end
 	local unloader = getUnloader()
-	if not unloader then return Library:Notify("Sell Failed: Unloader not found!", 4) end
-
+	if not unloader then return notify("Sell Failed: Unloader not found", COLORS.danger) end
 	local returnCFrame = hrp.CFrame
-
 	local prompt = unloader:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if prompt and fireproximityprompt then
 		local promptPart = prompt.Parent:IsA("BasePart") and prompt.Parent or unloader.PrimaryPart
 		if promptPart then
-			Library:Notify("Selling: Firing ProximityPrompt...", 2)
 			hrp.CFrame = promptPart.CFrame + Vector3.new(0, 3, 0)
-			task.wait(0.5)
-			fireproximityprompt(prompt)
-			task.wait(0.5)
-			hrp.CFrame = returnCFrame
-			return
+			task.wait(0.5) fireproximityprompt(prompt) task.wait(0.5)
+			hrp.CFrame = returnCFrame return
 		end
 	end
-
-	local clickDetector = unloader:FindFirstChildWhichIsA("ClickDetector", true)
-	if clickDetector and fireclickdetector then
-		Library:Notify("Selling: Firing ClickDetector...", 2)
-		fireclickdetector(clickDetector)
-		return
-	end
-
+	local cd = unloader:FindFirstChildWhichIsA("ClickDetector", true)
+	if cd and fireclickdetector then fireclickdetector(cd) return end
 	local sellPart = unloader.PrimaryPart or unloader:FindFirstChildWhichIsA("BasePart")
-	if not sellPart then return Library:Notify("Sell Failed: Unloader has no physical parts.", 3) end
-
-	Library:Notify("Selling: Using Keypress (Keep window open!)", 2)
+	if not sellPart then return notify("Sell Failed: No parts", COLORS.danger) end
 	hrp.CFrame = sellPart.CFrame + Vector3.new(0, 3, 0)
 	task.wait(0.8)
 	pcall(function()
-		if VIM then
-			VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-			task.wait(0.2)
-			VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		end
+		if VIM then VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game) task.wait(0.2) VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game) end
 	end)
-	task.wait(0.5)
-	hrp.CFrame = returnCFrame
+	task.wait(0.5) hrp.CFrame = returnCFrame
+	notify("Sold!", COLORS.success)
 end
 
-local function stopAutoSellLoop()
+local function stopAutoSell()
 	autoSellEnabled = false
-	if autoSellThread then task.cancel(autoSellThread); autoSellThread = nil end
+	if autoSellThread then task.cancel(autoSellThread) autoSellThread = nil end
 end
 
-local function startAutoSellLoop()
+local function startAutoSell()
 	autoSellThread = task.spawn(function()
 		while autoSellEnabled do
 			doSell()
-			local elapsed = 0
-			while elapsed < SELL_INTERVAL and autoSellEnabled do task.wait(1) elapsed += 1 end
+			local e = 0
+			while e < SELL_INTERVAL and autoSellEnabled do task.wait(1) e += 1 end
 		end
 	end)
 end
 
-MiscSell:AddButton({ Text = 'Sell Now', Func = doSell })
-MiscSell:AddSlider('SellInterval', { Text = 'Sell Interval (s)', Default = 60, Min = 10, Max = 300, Rounding = 0, Callback = function(v) SELL_INTERVAL = v end })
-MiscSell:AddToggle('AutoSell', { Text = 'Auto Sell', Default = false, Callback = function(v) if v then autoSellEnabled = true startAutoSellLoop() else stopAutoSellLoop() end end })
+makeButton(sellSec, "Sell Now", doSell)
+makeSlider(sellSec, "Sell Interval (s)", 10, 300, 60, function(v) SELL_INTERVAL = v end)
+makeToggle(sellSec, "Auto Sell", false, function(v)
+	if v then autoSellEnabled = true startAutoSell() else stopAutoSell() end
+end)
 
+-- Noclip loop
+track(RunService.Stepped:Connect(function()
+	if noclipOn then
+		local char = LocalPlayer.Character
+		if char then
+			for _, p in ipairs(char:GetDescendants()) do
+				if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
+			end
+		end
+	end
+end))
 
 -- ------------------------------------------------------------------------------
---  VISUALS (FULLBRIGHT)
+--  VISUALS
 -- ------------------------------------------------------------------------------
-local EnvGroup = Tabs.Visuals:AddLeftGroupbox('Environment')
-
 local fullbrightEnabled = false
 local defaultLighting = {
-	Ambient        = Lighting.Ambient,
-	OutdoorAmbient = Lighting.OutdoorAmbient,
-	Brightness     = Lighting.Brightness,
-	ClockTime      = Lighting.ClockTime,
-	FogEnd         = Lighting.FogEnd,
-	GlobalShadows  = Lighting.GlobalShadows,
+	Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
+	Brightness = Lighting.Brightness, ClockTime = Lighting.ClockTime,
+	FogEnd = Lighting.FogEnd, GlobalShadows = Lighting.GlobalShadows,
 }
 
 local function applyFullbright()
 	if fullbrightEnabled then
-		Lighting.Ambient        = Color3.new(1, 1, 1)
-		Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-		Lighting.Brightness     = 2
-		Lighting.ClockTime      = 14
-		Lighting.FogEnd         = 100000
-		Lighting.GlobalShadows  = false
+		Lighting.Ambient = Color3.new(1,1,1) Lighting.OutdoorAmbient = Color3.new(1,1,1)
+		Lighting.Brightness = 2 Lighting.ClockTime = 14 Lighting.FogEnd = 100000 Lighting.GlobalShadows = false
 	else
-		Lighting.Ambient        = defaultLighting.Ambient
-		Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-		Lighting.Brightness     = defaultLighting.Brightness
-		Lighting.ClockTime      = defaultLighting.ClockTime
-		Lighting.FogEnd         = defaultLighting.FogEnd
-		Lighting.GlobalShadows  = defaultLighting.GlobalShadows
+		Lighting.Ambient = defaultLighting.Ambient Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
+		Lighting.Brightness = defaultLighting.Brightness Lighting.ClockTime = defaultLighting.ClockTime
+		Lighting.FogEnd = defaultLighting.FogEnd Lighting.GlobalShadows = defaultLighting.GlobalShadows
 	end
 end
 
-EnvGroup:AddToggle('Fullbright', {
-	Text = 'Fullbright',
-	Default = false,
-	Callback = function(Value)
-		fullbrightEnabled = Value
-		applyFullbright()
-	end
-})
-
+local envSec = makeSection(visualsTab, "Environment")
+makeToggle(envSec, "Fullbright", false, function(v) fullbrightEnabled = v applyFullbright() end)
 track(Lighting:GetPropertyChangedSignal("Ambient"):Connect(function() applyFullbright() end))
 track(Lighting:GetPropertyChangedSignal("OutdoorAmbient"):Connect(function() applyFullbright() end))
 
-
 -- ------------------------------------------------------------------------------
---  LINORIA MANAGERS
+--  SETTINGS
 -- ------------------------------------------------------------------------------
-local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
-MenuGroup:AddButton('Unload Script', function()
-	stopAutoSellLoop()
+local settSec = makeSection(settingsTab, "Menu")
+makeButton(settSec, "Unload Script", function()
+	stopAutoSell()
 	disconnectAll()
 	clearAllOreESP()
 	applyWalkSpeed(16)
-	if fullbrightEnabled then
-		fullbrightEnabled = false
-		applyFullbright()
-	end
-	Library:Unload()
+	fullbrightEnabled = false applyFullbright()
+	gui:Destroy()
+	if toggleGui then toggleGui:Destroy() end
 end)
 
-MenuGroup:AddLabel('Menu Bind'):AddKeyPicker('MenuKeybind', { Default = 'RightControl', NoUI = true, Text = 'Menu keybind' })
-Library.ToggleKeybind = Options.MenuKeybind
+-- ------------------------------------------------------------------------------
+--  KEYBINDS (F1, F2, F3, F4)
+-- ------------------------------------------------------------------------------
+track(UIS.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.KeyCode == Enum.KeyCode.F1 then
+		walkBoostOn = not walkBoostOn
+		applyWalkSpeed(walkBoostOn and BOOST_SPEED or DEFAULT_SPEED)
+	end
+	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
+	if input.KeyCode == Enum.KeyCode.F3 then doReturnPosition() end
+	if input.KeyCode == Enum.KeyCode.F4 then
+		local plots = workspace:FindFirstChild("Plots")
+		if not plots then return notify("Plots not found", COLORS.danger) end
+		local myPlot
+		for _, plot in plots:GetChildren() do
+			local id = plot:GetAttribute("PlayerId") or plot:GetAttribute("OwnerId") or plot:GetAttribute("Owner") or plot:GetAttribute("UserId")
+			if id == LocalPlayer.UserId then myPlot = plot break end
+		end
+		if myPlot then teleportTo(myPlot) else notify("Plot not found", COLORS.danger) end
+	end
+	if input.KeyCode == Enum.KeyCode.Space and infJumpOn then
+		local char = LocalPlayer.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+		end
+	end
+end))
 
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+-- ------------------------------------------------------------------------------
+--  BOTAO FLUTUANTE
+-- ------------------------------------------------------------------------------
+local toggleGui = Instance.new("ScreenGui")
+toggleGui.Name = "OTIMOSToggle"
+toggleGui.ResetOnSpawn = false
+toggleGui.DisplayOrder = 1000
+toggleGui.IgnoreGuiInset = true
+toggleGui.Parent = game:GetService("CoreGui")
 
-ThemeManager:SetFolder('HamoodHub')
-SaveManager:SetFolder('HamoodHub/Mining')
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 90, 0, 32)
+toggleBtn.Position = UDim2.new(1, -100, 0, 10)
+toggleBtn.BackgroundColor3 = COLORS.sidebar
+toggleBtn.TextColor3 = COLORS.accent
+toggleBtn.Text = ">> Menu"
+toggleBtn.TextSize = 12
+toggleBtn.Font = Enum.Font.GothamSemibold
+toggleBtn.BorderSizePixel = 0
+toggleBtn.AutoButtonColor = false
+toggleBtn.Parent = toggleGui
+corner(toggleBtn, 8)
+stroke(toggleBtn, COLORS.border)
 
-SaveManager:BuildConfigSection(Tabs['UI Settings'])
-ThemeManager:ApplyToTab(Tabs['UI Settings'])
+toggleBtn.MouseEnter:Connect(function() TweenService:Create(toggleBtn, TweenInfo.new(0.15), { BackgroundColor3 = COLORS.card }):Play() end)
+toggleBtn.MouseLeave:Connect(function() TweenService:Create(toggleBtn, TweenInfo.new(0.15), { BackgroundColor3 = COLORS.sidebar }):Play() end)
 
-Window:SelectTab(1)
-SaveManager:LoadAutoloadConfig()
+local menuVisible2 = true
+toggleBtn.MouseButton1Click:Connect(function()
+	menuVisible2 = not menuVisible2
+	main.Visible = menuVisible2
+	toggleBtn.Text = menuVisible2 and ">> Menu" or "<< Menu"
+end)
+
+local dragging2, dragStart2, btnStart2
+toggleBtn.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging2 = true dragStart2 = i.Position btnStart2 = toggleBtn.Position
+		i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then dragging2 = false end end)
+	end
+end)
+UIS.InputChanged:Connect(function(i)
+	if dragging2 and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local d = i.Position - dragStart2
+		toggleBtn.Position = UDim2.new(btnStart2.X.Scale, btnStart2.X.Offset + d.X, btnStart2.Y.Scale, btnStart2.Y.Offset + d.Y)
+	end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	main.Visible = false
+	menuVisible2 = false
+	toggleBtn.Text = "<< Menu"
+end)
