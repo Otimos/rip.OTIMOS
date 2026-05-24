@@ -7,7 +7,7 @@ local Lighting      = game:GetService("Lighting")
 local LocalPlayer   = Players.LocalPlayer
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  LINORIA BOILERPLATE (UPDATED URL)
+--  LINORIA BOILERPLATE
 -- ══════════════════════════════════════════════════════════════════════════════
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
@@ -47,7 +47,7 @@ end
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  ORE ESP (OPTIMIZED FOR 240 FPS)
+--  ORE ESP
 -- ══════════════════════════════════════════════════════════════════════════════
 local oreAdornments = {}
 local oreESPEnabled = false
@@ -103,7 +103,6 @@ OreESPGroup:AddToggle('OreESP', {
 		if Value then
 			local placedOre = workspace:FindFirstChild("PlacedOre")
 			if not placedOre then return Library:Notify("PlacedOre folder not found.", 4) end
-			
 			for _, desc in placedOre:GetDescendants() do
 				if desc:IsA("BasePart") and not oreAdornments[desc] then
 					addOreESP(desc)
@@ -141,32 +140,31 @@ local function setupOreConnections(placedOre)
 	track(placedOre.DescendantRemoving:Connect(function(desc)
 		removeOreESP(desc)
 	end))
-	
+
 	local lastDistanceCheck = 0
 
 	track(RunService.RenderStepped:Connect(function()
 		if not oreESPEnabled then return end
-		
+
 		local char = LocalPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		local camera = workspace.CurrentCamera
-		
+
 		local now = os.clock()
 		local shouldUpdateDistance = false
 		if now - lastDistanceCheck > 0.5 then
 			shouldUpdateDistance = true
 			lastDistanceCheck = now
 		end
-		
+
 		for part, data in pairs(oreAdornments) do
 			if part and part.Parent and hrp then
-				
 				if shouldUpdateDistance then
 					local dist = (hrp.Position - part.Position).Magnitude
 					data.inRange = dist <= maxEspDistance
 					data.box.Visible = data.inRange
 				end
-				
+
 				if showTracers and data.inRange then
 					local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
 					if onScreen then
@@ -209,12 +207,9 @@ local function teleportTo(model)
 	if not char then return end
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
-
 	if not model then return Library:Notify("Location not found in workspace.", 3) end
-
 	local target = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
 	if not target then return Library:Notify("No valid part found.", 3) end
-
 	hrp.CFrame = target.CFrame + Vector3.new(0, 5, 0)
 end
 
@@ -234,57 +229,35 @@ TpLoc:AddButton({
 })
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  SAVED POSITION
+--  SAVED POSITION (binds via UIS, F2 = salvar, F3 = retornar)
 -- ══════════════════════════════════════════════════════════════════════════════
 local savedPosition = nil
 
-TpLoc:AddButton({
-	Text = 'Save Position',
-	Func = function()
-		local char = LocalPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
-		savedPosition = hrp.CFrame
-		Library:Notify("✔ Posição salva!", 2)
-	end
-}):AddKeyPicker('SavePositionKey', {
-	Default = 'F2',
-	NoUI = false,
-	Mode = 'Always',
-	Text = 'Save Position',
-	Callback = function()
-		local char = LocalPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		savedPosition = hrp.CFrame
-		Library:Notify("✔ Posição salva!", 2)
-	end
-})
+local function doSavePosition()
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
+	savedPosition = hrp.CFrame
+	Library:Notify("✔ Posição salva! [F2]", 2)
+end
 
-TpLoc:AddButton({
-	Text = 'Return to Saved',
-	Func = function()
-		if not savedPosition then return Library:Notify("Nenhuma posição salva ainda.", 3) end
-		local char = LocalPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
-		hrp.CFrame = savedPosition
-		Library:Notify("✔ Teleportado para a posição salva!", 2)
-	end
-}):AddKeyPicker('ReturnPositionKey', {
-	Default = 'F3',
-	NoUI = false,
-	Mode = 'Always',
-	Text = 'Return to Saved',
-	Callback = function()
-		if not savedPosition then return end
-		local char = LocalPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		hrp.CFrame = savedPosition
-		Library:Notify("✔ Teleportado para a posição salva!", 2)
-	end
-})
+local function doReturnPosition()
+	if not savedPosition then return Library:Notify("Nenhuma posição salva ainda.", 3) end
+	local char = LocalPlayer.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
+	hrp.CFrame = savedPosition
+	Library:Notify("✔ Teleportado para a posição salva! [F3]", 2)
+end
+
+TpLoc:AddButton({ Text = 'Save Position [F2]',    Func = doSavePosition })
+TpLoc:AddButton({ Text = 'Return to Saved [F3]',  Func = doReturnPosition })
+
+track(UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
+	if input.KeyCode == Enum.KeyCode.F3 then doReturnPosition() end
+end))
 
 for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Store", "Prestige Store" }) do
 	TpStore:AddButton({ Text = storeName, Func = function() teleportTo(workspace:FindFirstChild(storeName)) end })
@@ -294,9 +267,9 @@ end
 -- ══════════════════════════════════════════════════════════════════════════════
 --  MISC & CHARACTER
 -- ══════════════════════════════════════════════════════════════════════════════
-local MiscMove = Tabs.Misc:AddLeftGroupbox('Movement')
+local MiscMove  = Tabs.Misc:AddLeftGroupbox('Movement')
 local MiscUtils = Tabs.Misc:AddLeftGroupbox('Utilities')
-local MiscSell = Tabs.Misc:AddRightGroupbox('Auto Sell')
+local MiscSell  = Tabs.Misc:AddRightGroupbox('Auto Sell')
 
 local DEFAULT_SPEED = 16
 local BOOST_SPEED   = 50
@@ -332,7 +305,7 @@ MiscMove:AddToggle('WalkBoost', {
 })
 
 MiscMove:AddToggle('InfJump', { Text = 'Infinite Jump', Default = false, Callback = function(v) infJumpOn = v end })
-MiscMove:AddToggle('Noclip', { Text = 'Noclip', Default = false, Callback = function(v) noclipOn = v end })
+MiscMove:AddToggle('Noclip',  { Text = 'Noclip',        Default = false, Callback = function(v) noclipOn  = v end })
 
 track(UIS.JumpRequest:Connect(function()
 	if infJumpOn then
@@ -387,7 +360,6 @@ local SELL_INTERVAL   = 60
 local function getUnloader()
 	local ok, result = pcall(function() return workspace.FactoryGridItemsClient.DSBuild3.DSBuild3.Unloader1 end)
 	if ok and result then return result end
-	
 	local factory = workspace:FindFirstChild("FactoryGridItemsClient")
 	if factory then
 		for _, desc in factory:GetDescendants() do
@@ -396,7 +368,6 @@ local function getUnloader()
 			end
 		end
 	end
-	
 	return nil
 end
 
@@ -407,17 +378,17 @@ local function doSell()
 	if not hrp then return Library:Notify("Sell Failed: HumanoidRootPart missing", 3) end
 
 	local unloader = getUnloader()
-	if not unloader then return Library:Notify("Sell Failed: Unloader not found! Path invalid.", 4) end
-	
+	if not unloader then return Library:Notify("Sell Failed: Unloader not found!", 4) end
+
 	local returnCFrame = hrp.CFrame
-	
+
 	local prompt = unloader:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if prompt and fireproximityprompt then
 		local promptPart = prompt.Parent:IsA("BasePart") and prompt.Parent or unloader.PrimaryPart
 		if promptPart then
 			Library:Notify("Selling: Firing ProximityPrompt...", 2)
 			hrp.CFrame = promptPart.CFrame + Vector3.new(0, 3, 0)
-			task.wait(0.5) 
+			task.wait(0.5)
 			fireproximityprompt(prompt)
 			task.wait(0.5)
 			hrp.CFrame = returnCFrame
@@ -437,24 +408,21 @@ local function doSell()
 
 	Library:Notify("Selling: Using Keypress (Keep window open!)", 2)
 	hrp.CFrame = sellPart.CFrame + Vector3.new(0, 3, 0)
-	
-	task.wait(0.8) 
-	
+	task.wait(0.8)
 	pcall(function()
 		if VIM then
 			VIM:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-			task.wait(0.2) 
+			task.wait(0.2)
 			VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 		end
 	end)
-	
 	task.wait(0.5)
 	hrp.CFrame = returnCFrame
 end
 
-local function stopAutoSellLoop() 
-	autoSellEnabled = false 
-	if autoSellThread then task.cancel(autoSellThread); autoSellThread = nil end 
+local function stopAutoSellLoop()
+	autoSellEnabled = false
+	if autoSellThread then task.cancel(autoSellThread); autoSellThread = nil end
 end
 
 local function startAutoSellLoop()
@@ -479,29 +447,29 @@ local EnvGroup = Tabs.Visuals:AddLeftGroupbox('Environment')
 
 local fullbrightEnabled = false
 local defaultLighting = {
-	Ambient = Lighting.Ambient,
+	Ambient        = Lighting.Ambient,
 	OutdoorAmbient = Lighting.OutdoorAmbient,
-	Brightness = Lighting.Brightness,
-	ClockTime = Lighting.ClockTime,
-	FogEnd = Lighting.FogEnd,
-	GlobalShadows = Lighting.GlobalShadows,
+	Brightness     = Lighting.Brightness,
+	ClockTime      = Lighting.ClockTime,
+	FogEnd         = Lighting.FogEnd,
+	GlobalShadows  = Lighting.GlobalShadows,
 }
 
 local function applyFullbright()
 	if fullbrightEnabled then
-		Lighting.Ambient = Color3.new(1, 1, 1)
+		Lighting.Ambient        = Color3.new(1, 1, 1)
 		Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-		Lighting.Brightness = 2
-		Lighting.ClockTime = 14
-		Lighting.FogEnd = 100000
-		Lighting.GlobalShadows = false
+		Lighting.Brightness     = 2
+		Lighting.ClockTime      = 14
+		Lighting.FogEnd         = 100000
+		Lighting.GlobalShadows  = false
 	else
-		Lighting.Ambient = defaultLighting.Ambient
+		Lighting.Ambient        = defaultLighting.Ambient
 		Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
-		Lighting.Brightness = defaultLighting.Brightness
-		Lighting.ClockTime = defaultLighting.ClockTime
-		Lighting.FogEnd = defaultLighting.FogEnd
-		Lighting.GlobalShadows = defaultLighting.GlobalShadows
+		Lighting.Brightness     = defaultLighting.Brightness
+		Lighting.ClockTime      = defaultLighting.ClockTime
+		Lighting.FogEnd         = defaultLighting.FogEnd
+		Lighting.GlobalShadows  = defaultLighting.GlobalShadows
 	end
 end
 
@@ -519,14 +487,14 @@ track(Lighting:GetPropertyChangedSignal("OutdoorAmbient"):Connect(function() app
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  LINORIA MANAGERS (SETTINGS & AUTOLOAD)
+--  LINORIA MANAGERS
 -- ══════════════════════════════════════════════════════════════════════════════
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload Script', function()
 	stopAutoSellLoop()
 	disconnectAll()
 	clearAllOreESP()
-	if applyWalkSpeed then applyWalkSpeed(16) end
+	applyWalkSpeed(16)
 	if fullbrightEnabled then
 		fullbrightEnabled = false
 		applyFullbright()
