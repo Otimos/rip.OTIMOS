@@ -7,7 +7,7 @@ local Lighting      = game:GetService("Lighting")
 local LocalPlayer   = Players.LocalPlayer
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  LINORIA BOILERPLATE
+--  OTIMOS
 -- ══════════════════════════════════════════════════════════════════════════════
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
@@ -229,7 +229,7 @@ TpLoc:AddButton({
 })
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  SAVED POSITION (binds via UIS, F2 = salvar, F3 = retornar)
+--  SAVED POSITION (binds via UIS, F2 = salvar, R = retornar)
 -- ══════════════════════════════════════════════════════════════════════════════
 local savedPosition = nil
 
@@ -247,16 +247,16 @@ local function doReturnPosition()
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
 	if not hrp then return Library:Notify("Personagem não encontrado.", 3) end
 	hrp.CFrame = savedPosition
-	Library:Notify("✔ Teleportado para a posição salva! [F3]", 2)
+	Library:Notify("✔ Teleportado para a posição salva! [R]", 2)
 end
 
 TpLoc:AddButton({ Text = 'Save Position [F2]',    Func = doSavePosition })
-TpLoc:AddButton({ Text = 'Return to Saved [F3]',  Func = doReturnPosition })
+TpLoc:AddButton({ Text = 'Return to Saved [R]',  Func = doReturnPosition })
 
 track(UIS.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
-	if input.KeyCode == Enum.KeyCode.F3 then doReturnPosition() end
+	if input.KeyCode == Enum.KeyCode.R then doReturnPosition() end
 end))
 
 for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Store", "Prestige Store" }) do
@@ -307,7 +307,7 @@ MiscMove:AddToggle('WalkBoost', {
 MiscMove:AddToggle('InfJump', { Text = 'Infinite Jump', Default = false, Callback = function(v) infJumpOn = v end })
 MiscMove:AddToggle('Noclip',  { Text = 'Noclip',        Default = false, Callback = function(v) noclipOn  = v end })
 
-track(UIS.JumpRequest:Connect(function()
+track(UIS.JumpReF2uest:Connect(function()
 	if infJumpOn then
 		local char = LocalPlayer.Character
 		if char then
