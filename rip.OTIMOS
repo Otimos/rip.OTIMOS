@@ -7,7 +7,7 @@ local Lighting      = game:GetService("Lighting")
 local LocalPlayer   = Players.LocalPlayer
 
 -- ══════════════════════════════════════════════════════════════════════════════
---  OTIMOS
+--  LINORIA BOILERPLATE
 -- ══════════════════════════════════════════════════════════════════════════════
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
@@ -31,7 +31,7 @@ local Tabs = {
 	['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
-Library:SetWatermark('OTIMOS')
+Library:SetWatermark('Hamood vibecoding | Linoria')
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -253,12 +253,6 @@ end
 TpLoc:AddButton({ Text = 'Save Position [F2]',    Func = doSavePosition })
 TpLoc:AddButton({ Text = 'Return to Saved [R]',  Func = doReturnPosition })
 
-track(UIS.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
-	if input.KeyCode == Enum.KeyCode.R then doReturnPosition() end
-end))
-
 for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Store", "Prestige Store" }) do
 	TpStore:AddButton({ Text = storeName, Func = function() teleportTo(workspace:FindFirstChild(storeName)) end })
 end
@@ -307,13 +301,26 @@ MiscMove:AddToggle('WalkBoost', {
 MiscMove:AddToggle('InfJump', { Text = 'Infinite Jump', Default = false, Callback = function(v) infJumpOn = v end })
 MiscMove:AddToggle('Noclip',  { Text = 'Noclip',        Default = false, Callback = function(v) noclipOn  = v end })
 
-track(UIS.JumpReF2uest:Connect(function()
-	if infJumpOn then
+track(UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.Space and infJumpOn then
 		local char = LocalPlayer.Character
 		if char then
 			local hum = char:FindFirstChildOfClass("Humanoid")
 			if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
 		end
+	end
+	if input.KeyCode == Enum.KeyCode.F2 then doSavePosition() end
+	if input.KeyCode == Enum.KeyCode.R then doReturnPosition() end
+	if input.KeyCode == Enum.KeyCode.F then
+		local plots = workspace:FindFirstChild("Plots")
+		if not plots then return Library:Notify("Plots folder not found.", 3) end
+		local myPlot
+		for _, plot in plots:GetChildren() do
+			local id = plot:GetAttribute("PlayerId") or plot:GetAttribute("OwnerId") or plot:GetAttribute("Owner") or plot:GetAttribute("UserId")
+			if id == LocalPlayer.UserId then myPlot = plot break end
+		end
+		if myPlot then teleportTo(myPlot) else Library:Notify("Your plot was not found.", 4) end
 	end
 end))
 
@@ -487,7 +494,7 @@ track(Lighting:GetPropertyChangedSignal("OutdoorAmbient"):Connect(function() app
 
 
 -- ══════════════════════════════════════════════════════════════════════════════
--- MANAGERS
+--  LINORIA MANAGERS
 -- ══════════════════════════════════════════════════════════════════════════════
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload Script', function()
