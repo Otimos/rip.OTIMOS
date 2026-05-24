@@ -6,9 +6,9 @@ local RunService    = game:GetService("RunService")
 local Lighting      = game:GetService("Lighting")
 local LocalPlayer   = Players.LocalPlayer
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  LINORIA BOILERPLATE
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
@@ -34,9 +34,9 @@ local Tabs = {
 Library:SetWatermark('Hamood vibecoding | Linoria')
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  CONNECTION REGISTRY
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local connections = {}
 local function track(conn) connections[#connections + 1] = conn end
 
@@ -46,9 +46,9 @@ local function disconnectAll()
 end
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  ORE ESP
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local oreAdornments = {}
 local oreESPEnabled = false
 local showTracers = false
@@ -196,9 +196,9 @@ else
 end
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  TELEPORT
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local TpLoc = Tabs.Teleports:AddLeftGroupbox('Locations')
 local TpStore = Tabs.Teleports:AddRightGroupbox('Stores')
 
@@ -228,9 +228,9 @@ TpLoc:AddButton({
 	end
 })
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  SAVED POSITION (binds via UIS, F2 = salvar, F3 = retornar)
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local savedPosition = nil
 
 local function doSavePosition()
@@ -258,9 +258,9 @@ for _, storeName in ipairs({ "Explosives Store", "Pickaxe Store", "Backpack Stor
 end
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  MISC & CHARACTER
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local MiscMove  = Tabs.Misc:AddLeftGroupbox('Movement')
 local MiscUtils = Tabs.Misc:AddLeftGroupbox('Utilities')
 local MiscSell  = Tabs.Misc:AddRightGroupbox('Auto Sell')
@@ -357,9 +357,9 @@ MiscUtils:AddButton({
 })
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  AUTO SELL
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local autoSellEnabled = false
 local autoSellThread  = nil
 local SELL_INTERVAL   = 60
@@ -447,9 +447,9 @@ MiscSell:AddSlider('SellInterval', { Text = 'Sell Interval (s)', Default = 60, M
 MiscSell:AddToggle('AutoSell', { Text = 'Auto Sell', Default = false, Callback = function(v) if v then autoSellEnabled = true startAutoSellLoop() else stopAutoSellLoop() end end })
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  VISUALS (FULLBRIGHT)
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local EnvGroup = Tabs.Visuals:AddLeftGroupbox('Environment')
 
 local fullbrightEnabled = false
@@ -493,9 +493,9 @@ track(Lighting:GetPropertyChangedSignal("Ambient"):Connect(function() applyFullb
 track(Lighting:GetPropertyChangedSignal("OutdoorAmbient"):Connect(function() applyFullbright() end))
 
 
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 --  LINORIA MANAGERS
--- ══════════════════════════════════════════════════════════════════════════════
+-- ------------------------------------------------------------------------------
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload Script', function()
 	stopAutoSellLoop()
